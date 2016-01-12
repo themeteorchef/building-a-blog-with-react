@@ -1,0 +1,40 @@
+# Meteor packages used by this project, one per line.
+#
+# 'meteor add' and 'meteor remove' will edit this file for you,
+# but you can also edit it by hand.
+
+accounts-password
+accounts-base
+jquery
+check
+audit-argument-checks
+themeteorchef:jquery-validation
+twbs:bootstrap
+browser-policy
+meteorhacks:npm
+
+
+themeteorchef:bert
+meteorhacks:ssr
+standard-minifiers
+
+
+npm-container
+ecmascript
+digilord:faker
+kadira:flow-router
+kadira:blaze-layout
+meteorhacks:fast-render
+meteor-base
+session
+templating
+fourseven:scss
+stevezhu:lodash
+reactive-var
+reactive-dict
+aldeed:collection2
+tracker
+react
+peerlibrary:aws-sdk
+random
+kadira:react-layout
