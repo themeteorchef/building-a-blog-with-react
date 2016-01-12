@@ -6,8 +6,7 @@ AuthenticatedNavigation = React.createClass({
     return {
       items: {
         left: [
-          { uid: 'index', href: '/', label: 'Index' },
-          { uid: 'dashboard', href: '/dashboard', label: 'Dashboard' }
+          { uid: 'posts', href: '/posts', label: 'Posts' }
         ],
         right: [
           {
@@ -18,7 +17,7 @@ AuthenticatedNavigation = React.createClass({
             dropdownItems: [
               { uid: 'logout', href: '#', label: 'Logout', action: () => {
                 return Meteor.logout( () => {
-                  FlowRouter.go( '/login' );
+                  FlowRouter.go( 'index' );
                 });
               }}
             ]

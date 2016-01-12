@@ -2,16 +2,16 @@ const authenticatedRoutes = FlowRouter.group({
   name: 'authenticated'
 });
 
-authenticatedRoutes.route( '/', {
-  name: 'index',
+authenticatedRoutes.route( '/posts', {
+  name: 'posts',
   action() {
-    ReactLayout.render( App, { yield: <Index /> } );
+    ReactLayout.render( App, { yield: <PostsList /> } );
   }
 });
 
-authenticatedRoutes.route( '/dashboard', {
-  name: 'dashboard',
-  action() {
-    ReactLayout.render( App, { yield: <Dashboard /> } );
+authenticatedRoutes.route( '/posts/:_id/edit', {
+  name: 'editor',
+  action( params ) {
+    ReactLayout.render( App, { yield: <Editor post={ params._id } /> } );
   }
 });

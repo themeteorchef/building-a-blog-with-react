@@ -6,8 +6,10 @@ App = React.createClass({
       hasUser: !!Meteor.user(),
       isPublic( route ) {
         return [
+          'index',
+          'singlePost',
+          'tagIndex',
           'login',
-          'signup',
           'recoverPassword',
           'resetPassword',
           'notFound'
