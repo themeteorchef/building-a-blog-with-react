@@ -259,7 +259,15 @@ let PostsSchema = new SimpleSchema({
 
 Don't give up! This is a bit trickier than our other `autoValue()`s but not too scary. Here, our goal is to determine whether or not a post with the same slug as the one currently being managed. This means that if we have a post called `my-great-film-review` and then try to add another with the same title, the slug will be set to `my-great-film-review-1`. This prevents overwriting and collisions in our URLs later and encourages authors to use more unique post titles.
 
- #### Listing posts for editors
+To do this, we're creating two queries and counting the number of posts returned _by_ those queries. First, we check whether the current slug already exists in the database (we use a [JavaScript RegEx](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Guide/Regular_Expressions) to do this)—notice we filter out this post from the results to avoid renaming its slug with `{ $ne: this.docId }`—returning the number of existing posts with the same slug. Read that a few times! It's a bit of a brain buster. In essence, this returns us the number of posts that have the same `slug` value as the post being inserted or updated, excluding that post from the count.
+
+Next, we do something very similar but this time for posts with the slug `untitled-post`. Wait, what? As we'll see in a little bit, whenever we create a new post we'll be giving it the title "Untitled Post" to start with. Here, we account for this and ensure that the slug value is handled properly. Down below, then, we check whether or not a slug is being passed. If one _is_ passed, we use our `existingSlugCount` suffixing the count plus one of matching posts to the returned value. If no posts exist, we return the value as-is.
+
+If we _do not_ have a slug passed (meaning we're creating a new post and want this to be automated), we check our `existingUntitled` count and update the slug in the exact same way we handle existing slugs. Woah. This is a pretty powerful chunk of code, so read it over a few times! This will save us and the HD Buff team a lot of frustration later.
+
+Phew. We're making good progress but we still have a lot to do. Let's keep chuggin'. Next up, we need to implement our ability to insert new posts and then display a list of those posts for editors to select from.
+
+#### Creating and listing posts for editors
 
 #### Saving content
 <div class="note">
