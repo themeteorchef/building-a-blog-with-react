@@ -566,6 +566,11 @@ getTags() {
 
 Because our list of tags will be stored as an _array_, when returning it back to the editor, we need to "prettify it" as a string. For example, we're expecting something like this `[ 'tacos', 'burritos', 'sandwiches' ]` but want to set the value of our tags input to `tacos, burritos, sandwiches`. Using this method `getTags()`, we accomplish this by pulling in the post data and if we discoer it has tags set, use a JavaScript `.join( ', ' )` to return our array as a comma-separated string! 
 
+<div class="note">
+  <h3>Why not use a component? <i class="fa fa-warning"></i></h3>
+  <p>As of writing, adding third-party components is tricky. The original scope for this recipe was to include a token input, however, the experience of implementing it was confusing to say the least. Unless you're comfortable getting your hands dirty, usage of third-party components is unadvised until Meteor adds proper support for <code>require</code> in Meteor 1.3.</p>
+</div>
+
 Continuing down a similar path, let's slide up our component a little further and look at the `getLastUpdate()` method we're using toward the top of our component's `render()` method.
 
 <p class="block-header">/client/components/views/editor.jsx</p>
@@ -606,6 +611,8 @@ Next, we grab the value of `event.target`, or, our title input. This works becau
 Yikes! That seems like a lot, but step through it and it will make sense. With this in place, whenever we edit the value of our title input, our slug will automatically be generated and set on the slug input! Nice work. That was a big one to solve.
 
 Last but not least for this form, let's get some validation wired up and then handle saving changes on the server!
+
+
 
 #### Saving the form
 
