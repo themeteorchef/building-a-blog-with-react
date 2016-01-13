@@ -568,6 +568,39 @@ Because our list of tags will be stored as an _array_, when returning it back to
 
 Continuing down a similar path, let's slide up our component a little further and look at the `getLastUpdate()` method we're using toward the top of our component's `render()` method.
 
+<p class="block-header">/client/components/views/editor.jsx</p>
+
+```javascript
+getLastUpdate() {
+  if ( this.data ) {
+    let { formatLastUpdate } = ReactHelpers,
+        post                 = this.data.post;
+
+    return `${ formatLastUpdate( post.updated ) } by ${ post.author }`;
+  }
+}
+```
+
+A little more involved, but about the same. Here, we check if our data is available and if it is, we assign a few variables. The first is a bit funky. Here, we're using ES2015 object destructuring to say "give us the `formatLastUpdate()` method that's defined in the global `ReactHelpers` object." What's that? This is a collection of helpers that is being [added to the React port of Base](https://github.com/themeteorchef/building-a-blog-with-react/blob/master/code/client/helpers/react.js) (the TMC starter kit).
+
+Here, `formatLastUpdate()` is responsible for taking the date our post was last marked as updated—remember, we set this in our schema to be an ISO8601 string—and returning it as a human readable string like `January 13th, 2016 10:30 am` (behind the scenes we're using the `momentjs:moment` packag we installed earlier). To close the loop here, we concatenate this result with the word `by` and the value of `post.author`, which, again, is the name of the most recent user to update this post (set by `autoValue()` in our schema). Pretty wild stuff!
+
+Okay. Next up is something really neat! To make the editing experience nice and simple for the folks at HD Buff, we want to auto-generate slugs based on whatever title they set on the post. To do this, notice that in our `render()` method, the `<FormControl />` component for our post's title has an `onChange={ this.generateSlug }` prop. Can you guess what's happening here? Whenever this input changes (meaning a user types in it), we want to grab that value, convert it into a slug `like-this-right-here` and set it on the slug field beneath the title. Let's take a peek at the `generateSlug()` method we're calling.
+
+<p class="block-header">/path</p>
+
+```javascript
+generateSlug( event ) {
+  let { setValue } = ReactHelpers,
+      form         = this.refs.editPostForm.refs.form,
+      title        = event.target.value;
+
+  setValue( form, '[name="postSlug"]', getSlug( title, { custom: { "'": "" } } ) );
+}
+```
+
+We're building up a lot of knowledge here! Notice that again, we're pulling in one of the methods `setValue` from our `ReactHelpers` global (this will help us set the slug we generate on the slug input). Next, we do something funky involving React's refs. Due to the shape of our [`<Form />`]() component, we need to get access to that form by calling `this.refs.editPostForm.refs.form`. If you look down in our `render()` method, you'll notice `<Form />` has a prop `ref="editPostForm"` on it. This is React's way of identifying a DOM node within a component. By calling `this.refs.editPostForm.refs.form`, we're essentially grabbing the _nested_ ref of the `<Form />` component to access the actual DOM node for the form. _Gasp_. That was long-winded. If that's confusing, take a peek at the wiring of the `<Form />` component [here](https://github.com/themeteorchef/building-a-blog-with-react/blob/master/code/client/components/generic/forms/form.jsx).
+
 <div class="note">
   <h3>Why not use a component? <i class="fa fa-warning"></i></h3>
   <p>As of writing, adding third-party components is tricky. The original scope for this recipe was to include a token input, however, the experience of implementing it was confusing to say the least. Unless you're comfortable getting your hands dirty, usage of third-party components is unadvised until Meteor adds proper support for <code>require</code> in Meteor 1.3.</p>
