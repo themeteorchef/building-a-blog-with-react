@@ -124,13 +124,149 @@ With this in place, we now have a functioning auth flow for our app. This means 
 </div>
 
 ### Building the editor
+Next up, we need to implement the editor where the HD Buff team will actually manage content on their blog. This will require three steps: adding the ability to list existing posts, the ability to create new posts, and the ability to edit posts in a form. Before we start our work on these components, though, we need to set up a collection where all of our data will live. To help us out later, we'll be using some Schema-foo to automate the creation of some of the data we'll need.
 
 #### Setting up a collection and schema
+Let's get our collection set up now. To start, let's get a simple definition in place and lock down our allow/deny rules (this will help us to keep the client secure and force all database operations to happen on the server).
+
+<p class="block-header">/collections/posts</p>
+
+```javascript
+Posts = new Mongo.Collection( 'posts' );
+
+Posts.allow({
+  insert: () => false,
+  update: () => false,
+  remove: () => false
+});
+
+Posts.deny({
+  insert: () => true,
+  update: () => true,
+  remove: () => true
+});
+```
+
+Simple enough! Here we create our new collection assigning it to the global variable `Posts` and then set up our `allow` and `deny` rules. Again, this is a security practice. Here, we're saying that we want to deny _all_ database operations on the client and we do not want to allow _any_ database operations on the client (specifically for our `Posts`) collection. This means that later, we'll need to use Meteor methods in order to manage our database. We do this because allow and deny rules are finicky and error prone. Using method's does add a little work to our plate, but gives us peace of mind for later.
+
+Next up, we need to define a schema. For this, we're going to rely on the [aldeed:collection2](https://themeteorchef.com/snippets/using-the-collection2-package/) package that comes with [Base](https://github.com/themeteorchef/base/tree/base-react). Because some of the rules here are a little more complicated than others, let's add the basic ones first and then pepper in the more complicated stuff.
+
+<p class="block-header">/collections/posts.js</p>
+
+```javascript
+let PostsSchema = new SimpleSchema({
+  "published": {
+    type: Boolean,
+    label: "Is this post published?",
+    autoValue() {
+      if ( this.isInsert ) {
+        return false;
+      }
+    }
+  },
+  "updated": {
+    type: String,
+    label: "The date this post was last updated on.",
+    autoValue() {
+      return ( new Date() ).toISOString();
+    }
+  },
+  "title": {
+    type: String,
+    label: "The title of this post.",
+    defaultValue: "Untitled Post"
+  },
+  "content": {
+    type: String,
+    label: "The content of this post.",
+    optional: true
+  },
+  "tags": {
+    type: [ String ],
+    label: "The tags for this post.",
+    optional: true
+  }
+});
+
+Posts.attachSchema( PostsSchema );
+```
+
+Okay! Here, we have the basic parts of our schema. **This is not all of the fields we'll need**, just the ones with simple rulesets. Here, `published` is being used to determine whether or not the current post is published. This is a `Boolean` value, meaning it's either `true` (is published) or `false` (is not published). Notice that protect our authors, when we insert a new post we're automatically setting the value of this field to `false`. Neat, eh? This means that no matter what, if we insert a new post it will have its published value set to `false`. They'll thank us later!
+
+Next, `updated` is doing something similar, however, setting the current date as an [ISO 8601](https://en.wikipedia.org/wiki/ISO_8601) string. A little further down, `title` and `content` are just going to be simple `String` values. For `tags`, this will just be validating as an `Array` of `String`s. Notice that both `content` and `tags` are being made optional. Why's that? Well, technically we'll be allowing our authors to create new posts _without_ any content or tags. While this isn't likely to happen all of the time, we may find authors wanting to save a post idea but not publish it yet (remember, posts are _not_ published by default). Finally, to save us some time, notice that we've already attached our schema to our `Posts` collection.
+
+Now for the tricky part! Right now the HD Buff team isn't terribly concerned about content owernship. They've alluded to the idea that whoever last touched a post is going to be considered the owner. To make our lives easy, we can piggyback on `autoValue()` again, this time however, setting the author name automatically. Let's add it in:
+
+<p class="block-header">/collections/posts.js</p>
+
+```javascript
+let PostsSchema = new SimpleSchema({
+  "published": {
+    type: Boolean,
+    label: "Is this post published?",
+    autoValue() {
+      if ( this.isInsert ) {
+        return false;
+      }
+    }
+  },
+  "author": {
+    type: String,
+    label: "The ID of the author of this post.",
+    autoValue() {
+      let user = Meteor.users.findOne( { _id: this.userId } );
+      if ( user ) {
+        return `${ user.profile.name.first } ${ user.profile.name.last }`;
+      }
+    }
+  },
+  [...]
+});
+```
+
+Nothing _too_ crazy. Here, we're automatically setting the value of the `author` field on _any_ changes to posts (inserts, updates, etc.) with the name of the current user. To get their name, notice that we take `this.userId` (this is automatically provided by the collection2 package) and pass it to a call to `Meteor.users.findOne()`. From there, if we get a user back we grab the `first` and `last` name of the user from their `profile`'s `name` property and concatenate them into a String using ES2015's [template strings](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/template_strings) feature. Phew! Now, if "Joe Buff" is logged in and creates a new post (or edits an existing one), he will be set as the author. If "Jane Buff" does the same, _she_ will be set as the author! Pretty slick.
+
+Okay. Just one more of these to knock out and our schema is ready. This may be frustrating, but realize that we're saving ourselves a lot of effort later! Next, we need to account for duplicate `slug` values (`the-title-formatted-for-a-url-like-this`) for our posts automatically. Let's take a look:
+
+<p class="block-header">/collections/posts.js</p>
+
+```javascript
+let PostsSchema = new SimpleSchema({
+  [...]
+  "title": {
+    type: String,
+    label: "The title of this post.",
+    defaultValue: "Untitled Post"
+  },
+  "slug": {
+    type: String,
+    label: "The slug for this post.",
+    autoValue() {
+      let slug              = this.value,
+          existingSlugCount = Posts.find( { _id: { $ne: this.docId }, slug: slug } ).count(),
+          existingUntitled  = Posts.find( { slug: { $regex: /untitled-post/i } } ).count();
+
+      if ( slug ) {
+        return existingSlugCount > 0 ? `${ slug }-${ existingSlugCount + 1 }` : slug;
+      } else {
+        return existingUntitled > 0 ? `untitled-post-${ existingUntitled + 1 }` : 'untitled-post';
+      }
+    }
+  },
+  [...]
+});
+```
+
+Don't give up! This is a bit trickier than our other `autoValue()`s but not too scary. Here, our goal is to determine whether or not a post with the same slug as the one currently being managed. This means that if we have a post called `my-great-film-review` and then try to add another with the same title, the slug will be set to `my-great-film-review-1`. This prevents overwriting and collisions in our URLs later and encourages authors to use more unique post titles.
+
+ #### Listing posts for editors
+
 #### Saving content
 <div class="note">
   <h3>Why not use a component? <i class="fa fa-warning"></i></h3>
   <p>As of writing, adding third-party components is tricky. The original scope for this recipe was to include a token input, however, the experience of implementing it was confusing to say the least. Unless you're comfortable getting your hands dirty, usage of third-party components is unadvised until Meteor adds proper support for <code>require</code> in Meteor 1.3.</p>
 </div>
+
 ### Listing posts in the index
 ### Creating tag pages
 ### Wrap up & summary
