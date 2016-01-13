@@ -13,6 +13,23 @@ FormControl = React.createClass({
       </label>;
     }
   },
+  renderCheckbox() {
+    if ( this.props.defaultValue ) {
+      return <input
+        defaultChecked={ true }
+        type="checkbox"
+        name={ this.props.name }
+        id={ this.props.id }
+        onClick={ this.toggleCheckbox }
+      />;
+    } else {
+      return <input
+        type="checkbox"
+        name={ this.props.name }
+        id={ this.props.id }
+      />;
+    }
+  },
   renderFormControl() {
     let fields = {
       input: <input
@@ -33,7 +50,10 @@ FormControl = React.createClass({
         disabled={ this.props.disabled }
         onChange={ this.props.onChange }
         defaultValue={ this.props.defaultValue }
-      ></textarea>
+      ></textarea>,
+      checkbox: <div className="checkbox">
+        <label>{ this.renderCheckbox() } { this.props.label }</label>
+      </div>
     };
 
     return fields[ this.props.style ];

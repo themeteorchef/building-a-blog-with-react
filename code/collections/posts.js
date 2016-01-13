@@ -13,6 +13,15 @@ Posts.deny({
 });
 
 let PostsSchema = new SimpleSchema({
+  "published": {
+    type: Boolean,
+    label: "Is this post published?",
+    autoValue() {
+      if ( this.isInsert ) {
+        return false;
+      }
+    }
+  },
   "author": {
     type: String,
     label: "The ID of the author of this post.",
@@ -40,7 +49,7 @@ let PostsSchema = new SimpleSchema({
     label: "The slug for this post.",
     autoValue() {
       let slug              = this.value,
-          existingSlugCount = Posts.find( { _id: { $ne: this.docId }, slug: slug } ).count(),
+          existingSlugCount = Posts.find( { _id: { $ne: this.docId }, slug: new RegExp( slug ) } ).count(),
           existingUntitled  = Posts.find( { slug: { $regex: /untitled-post/i } } ).count();
 
       if ( slug ) {

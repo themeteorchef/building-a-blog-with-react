@@ -7,11 +7,6 @@ Editor = React.createClass({
       post: Posts.findOne( { _id: this.props.post } )
     };
   },
-  formatLastUpdate( date ) {
-    if ( date ) {
-      return moment( date ).format( 'MMMM Do, YYYY hh:mm a' );
-    }
-  },
   validations() {
     let component = this;
 
@@ -27,7 +22,7 @@ Editor = React.createClass({
         }
       },
       submitHandler() {
-        let { getValue } = ReactHelpers;
+        let { getValue, isChecked } = ReactHelpers;
 
         let form = component.refs.editPostForm.refs.form,
             post = {
@@ -35,6 +30,7 @@ Editor = React.createClass({
               title: getValue( form, '[name="postTitle"]' ),
               slug: getValue( form, '[name="postSlug"]' ),
               content: getValue( form, '[name="postContent"]' ),
+              published: isChecked( form, '[name="postPublished"]' ),
               tags: getValue( form, '[name="postTags"]' ).split( ',' ).map( ( string ) => {
                 return string.trim();
               })
@@ -61,7 +57,7 @@ Editor = React.createClass({
     if ( this.data ) {
       let { formatLastUpdate } = ReactHelpers,
           post                 = this.data.post;
-          
+
       return `${ formatLastUpdate( post.updated ) } by ${ post.author }`;
     }
   },
@@ -85,6 +81,15 @@ Editor = React.createClass({
           <p className="updated-date">
             <strong>Last Updated:</strong> { this.getLastUpdate() }
           </p>
+          <FormGroup>
+            <FormControl
+              style="checkbox"
+              name="postPublished"
+              id="#post-published"
+              label="Published?"
+              defaultValue={ this.data.post && this.data.post.published }
+            />
+          </FormGroup>
           <FormGroup>
             <FormControl
               showLabel={ false }
