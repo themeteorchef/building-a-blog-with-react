@@ -695,7 +695,99 @@ Well, remember that when creating our new posts, we didn't set a content or tags
 Awesome. At this point, we've got our posts inserting and everything wired up for admins. Next, let's focus on getting posts output for our readers. This will be much simpler and should go pretty fast!
 
 ### Listing posts in the index (and tag pages)
-Great work so far. We've come a long way, but we're not quite done. Next, we need to wire up a list of posts for HD Buff's readers. This will be the main stream of _published_ posts. In tandem with this, we're also going to wire up a way to make this list filterable by tag. 
+Great work so far. We've come a long way, but we're not quite done. Next, we need to wire up a list of posts for HD Buff's readers. This will be the main stream of _published_ posts. In tandem with this, we're also going to wire up a way to make this list filterable by tag. Let's dive in. Our `<PostsIndex />` component is pretty simple compared to what we've accomplished so far, so let's take a quick tour of how everything is working here (a lot of repeated concepts).
+
+<p class="block-header">/client/components/views/posts-index.jsx</p>
+
+```javascript
+PostsIndex = React.createClass({
+  mixins: [ ReactMeteorData ],
+  getMeteorData() {
+    let query = {};
+
+    if ( this.props.tag ) {
+      Meteor.subscribe( 'tagsIndex', this.props.tag );
+      query = { tags: { $in: [ this.props.tag ] } };
+    } else {
+      Meteor.subscribe( 'postsIndex' );
+    }
+
+    return {
+      posts: Posts.find( query, { sort: { updated: -1 } } ).fetch()
+    };
+  },
+  renderHeader() {
+    if ( this.props.tag ) {
+      return <Jumbotron className="tags-header">
+        <h4>Posts tagged with: { this.props.tag }.</h4>
+      </Jumbotron>;
+    } else {
+      return <Jumbotron className="blog-header">
+        <h2>Get Buff</h2>
+        <h4>A new blog by the HD Buff crew.</h4>
+      </Jumbotron>;
+    }
+  },
+  renderPosts() {
+    if ( this.data.posts.length > 0 ) {
+      return this.data.posts.map( ( post ) => {
+        return <Post key={ post._id } post={ post } />;
+      });
+    } else {
+      return <WarningAlert>No posts found.</WarningAlert>;
+    }
+  },
+  render() {
+    return <div className="posts">
+      <GridRow>
+        <GridColumn className="col-xs-12 col-sm-8 col-sm-offset-2">
+          { this.renderHeader() }
+          { this.renderPosts() }
+        </GridColumn>
+      </GridRow>
+    </div>;
+  }
+});
+```
+
+This should look super familiar. At this point, we're starting to repeat a lot of the patterns we've introduced so far. Let's do a quick breeze through this component, explaining the important pieces. Sound good?
+
+First, let's call attention to how we're pulling data. Remember, our goal for this component is to pull in data in one of two ways: either filtered by tag, or, with no filter (all published posts on the site). To achieve this, up in our call to `getMeteorData()`, we're doing a little `if`-foo to determine whether or not we're trying to render a list of posts by tag. If we detect the prop `this.props.tag`, we assume that yes, we want to filter by tag.
+
+In this case, we take the tag and pass it to our publication `tagsIndex` (we'll look at this soon) and then set `query` (the value we'll pass to the query set to the `posts` value of our object returned from `getMeteorData()`) to only gives us back the posts where the current tag is in the `tags` array of the post. Said another way, if we return a list of posts from the server like this:
+
+```javascript
+{ _id: '1', tags: [ 'peanuts', 'butter', 'oil' ] }
+{ _id: '2', tags: [ 'tacos', 'almonds', 'cookies' ] }
+{ _id: '3', tags: [ 'peanuts', 'sandwiches', 'political-differences' ] }
+```
+
+if we pass the tag `peanuts`, we'd only expect to get back posts `1` and `3` (those are the only posts with `peanuts` in their `tags` array). Making sense?
+
+A little less complex, if we _do not_ detect `this.props.tag`, we simply want to subscribe to `postsIndex`. Let's take a look at those two side-by-side now.
+
+<p class="block-header">/server/publications/posts-index.js</p>
+
+```javascript
+Meteor.publish( 'postsIndex', function() {
+  return Posts.find( { published: true } );
+});
+
+Meteor.publish( 'tagsIndex', function( tag ) {
+  check( tag, String );
+  return Posts.find( { published: true, tags: { $in: [ tag ] } } );
+});
+```
+
+About what we'd expect. Notice for `postsIndex` we simply return _all_ of the posts who's `published` flag is set to `true`. Down in `tagsIndex`, we do something similar, however, also passing in the `tag` from the client using an identical `{ $in: [ tag ] }` check like we did on the client. This guarantees that we only get back posts with the matching tag. Neat!
+
+Back in our `<PostsIndex />` component, the rest is pretty simple. If we're on a tag page we decide to render a slightly different page header displaying the name of the currently selected tag. For `renderPosts()`, if we have a set of posts we want to map over those returning an instance of `<Post />` (we'll look at this next). Otherwise, we return a "No posts found." message just like we did for editors earlier. Boom! Making progress. 
+
+Real quick, let's take a peek at that `<Post />` component as it's got a little more going on then meets the eye.
+
+#### The `<Post />` component
+
+
 
 ### Displaying a single post
 
