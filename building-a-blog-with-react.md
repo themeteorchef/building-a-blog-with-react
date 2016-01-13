@@ -612,10 +612,58 @@ Yikes! That seems like a lot, but step through it and it will make sense. With t
 
 Last but not least for this form, let's get some validation wired up and then handle saving changes on the server!
 
-
-
 #### Saving the form
+Here comes the turkey. This is a big step, but should actually look somewhat familiar if you've worked with validation in the past. What we want to do now is validate the fields in our editor and if they're good to go, push an update of our post to the server. If you're new to validation, take a peek at this post on [jQuery validation](), the underying package we'll use to validate our form here.
 
+<p class="block-header">/client/components/views/editor.jsx</p>
+
+```javascript
+validations() {
+  let component = this;
+
+  return {
+    rules: {
+      postTitle: {
+        required: true
+      }
+    },
+    messages: {
+      postTitle: {
+        required: "Hang on there, a post title is required!"
+      }
+    },
+    submitHandler() {
+      let { getValue, isChecked } = ReactHelpers;
+
+      let form = component.refs.editPostForm.refs.form,
+          post = {
+            _id: component.props.post,
+            title: getValue( form, '[name="postTitle"]' ),
+            slug: getValue( form, '[name="postSlug"]' ),
+            content: getValue( form, '[name="postContent"]' ),
+            published: isChecked( form, '[name="postPublished"]' ),
+            tags: getValue( form, '[name="postTags"]' ).split( ',' ).map( ( string ) => {
+                return string.trim();
+              })
+          };
+
+      Meteor.call( 'savePost', post, ( error, response ) => {
+        if ( error ) {
+          Bert.alert( error.reason, 'danger' );
+        } else {
+          Bert.alert( 'Post saved!', 'success' );
+        }
+      });
+    }
+  };
+},
+handleSubmit( event ) {
+  event.preventDefault();
+}
+```
+Woah buddy! A lot going on here but nothing too crazy. Notice that we have two methods output here: `validations()` and `handleSubmit()`. Here, `handleSubmit()` is responsible for "terminating" the default behavior of our form's `onSubmit` method—we can see this being attached to our `<Form />` component in our `render()`—and instead, deferring submission to our validation's `submitHandler()` method. This is a bit strange, but allows to get our form validated and handle the submission without a lot of running around.
+
+Inside `validations()`—this is also attached to our `<Form />` component as a prop—we add a single rule for our `postTitle` input. This is ensuring that `postTitle` is _not_ blank when our user submits the form. If it is, they'll be asked to correct it before they submit the form. Once the form is all green, we get to work in our `submitHandler()`. At this point, we're building up the object we'll send to the server to update our post. 
 
 ### Listing posts in the index
 ### Creating tag pages
