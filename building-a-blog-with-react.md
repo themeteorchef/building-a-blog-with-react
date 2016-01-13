@@ -603,12 +603,12 @@ We're building up a lot of knowledge here! Notice that again, we're pulling in o
 
 Next, we grab the value of `event.target`, or, our title input. This works because the "event" that's taking place is happening on our title input. By proxy, then, event.target is equal to our title input. With _all of this_ bundled up, we make a call to `setValue()`, passing the context for where our field will be—`form`—the name attribute of the element we want to set the value on—our slug input—and finally, we use the `getSlug()` method from the `ongoworks:speakingurl` package we installed earlier to generate the `slugified-version-of-our-title`. 
 
-Yikes! That seems like a lot, but step through it and it will make sense. With this in place, whenever we edit the value of our title input, our slug will automatically be generated and set on the slug input!
+Yikes! That seems like a lot, but step through it and it will make sense. With this in place, whenever we edit the value of our title input, our slug will automatically be generated and set on the slug input! Nice work. That was a big one to solve.
 
-<div class="note">
-  <h3>Why not use a component? <i class="fa fa-warning"></i></h3>
-  <p>As of writing, adding third-party components is tricky. The original scope for this recipe was to include a token input, however, the experience of implementing it was confusing to say the least. Unless you're comfortable getting your hands dirty, usage of third-party components is unadvised until Meteor adds proper support for <code>require</code> in Meteor 1.3.</p>
-</div>
+Last but not least for this form, let's get some validation wired up and then handle saving changes on the server!
+
+#### Saving the form
+
 
 ### Listing posts in the index
 ### Creating tag pages
