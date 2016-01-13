@@ -10,7 +10,7 @@
 
 ### Prep
 - **Time**: ~2-3 hours
-- **Difficulty**: Intermediate
+- **Difficulty**: Advanced
 - **Additional knowledge required**: [basic usage of React](https://themeteorchef.com/recipes/getting-started-with-react/), [understanding props and state](https://themeteorchef.com/snippets/understanding-props-and-state-in-react) in React, and using [Flow Router](https://themeteorchef.com/snippets/using-flow-router-with-react/) with React.
 
 ### What are we building?
@@ -268,6 +268,136 @@ If we _do not_ have a slug passed (meaning we're creating a new post and want th
 Phew. We're making good progress but we still have a lot to do. Let's keep chuggin'. Next up, we need to implement our ability to insert new posts and then display a list of those posts for editors to select from.
 
 #### Creating and listing posts for editors
+All right! Now we're getting in to the meat of this recipe. Now, we need a way to do two things: create a new posts and list all of the posts in the system for the HD Buff team. To start, let's scope out the basic structure of our component along with its listing feature. Pay close attention as we'll be making reference to a few things that we won't cover directly but will link up to the code for.
+
+<p class="block-header">/client/components/views/posts-list.jsx</p>
+
+```javascript
+PostsList = React.createClass({
+  mixins: [ ReactMeteorData ],
+  getMeteorData() {
+    Meteor.subscribe( 'postsList' );
+
+    return {
+      posts: Posts.find().fetch().map( ( post ) => {
+        return { uid: post._id, href: `/posts/${ post._id }/edit`, label: post.title };
+      })
+    };
+  },
+  renderPostsList() {
+    if ( this.data.posts.length > 0 ) {
+      return <ListGroup linked={ true } items={ this.data.posts } />;
+    } else {
+      return <WarningAlert>No posts found.</WarningAlert>;
+    }
+  },
+  render() {
+    return <GridRow>
+      <GridColumn className="col-xs-12 col-sm-8 col-sm-offset-2">
+        <SuccessButton type="button" label="New Post" onClick={ this.handleNewPost } />
+        <PageHeader size="h4" label="Posts" />
+        { this.renderPostsList() }
+      </GridColumn>
+    </GridRow>;
+  }
+});
+```
+
+A few things to noice. First, down in our `render()` method, in order to render our list of posts we're calling to a method `renderPostsList()` we've defined further up in our component. Our goal here is to conditionally display either a list of posts—if any exist—or, a message that reads "No posts found." Up in the `renderPostsList()` method, we can see this taking place. Inside, we begin by testing the length of `this.data.posts` (we'll cover this in detail soon). 
+
+If it's greater than `0` (meaning posts were found), we go ahead and render the [`<ListGroup />`](https://github.com/themeteorchef/building-a-blog-with-react/blob/master/code/client/components/generic/list-group.jsx) component in [Base](https://github.com/themeteorchef/base/tree/base-react). Alternatively, if we _do not_ find any posts in the database, we display the [`<WarningAlert />`](https://github.com/themeteorchef/building-a-blog-with-react/blob/master/code/client/components/generic/alerts/warning-alert.jsx) component (a stylized variation of the [`<Alert />`](https://github.com/themeteorchef/building-a-blog-with-react/blob/master/code/client/components/generic/alerts/alert.jsx) component. Review that wiring a few times. All we're doing is rendering out the list of posts, or, display an alert message.
+
+Let's review how the data is getting into the component to make sense of this. Up in the `getMeteorData()` method (this is the one that we get from Meteor's `react` package and is responsible for reactivity in the component), we begin to fetch data by subscribing to a publication called `postsList`. Real quick, let's see what that's returning.
+
+<p class="block-header">/server/publications/posts-list.js</p>
+
+```javascript
+Meteor.publish( 'postsList', () => {
+  return Posts.find();
+});
+```
+
+Un-der-whel-ming! Pretty simple here. Because we're on the admin side of things, we simply want to return _all_ of the posts in the database. This means that all authors should have access to _all_ posts. Remember, ownership isn't a priority for HD Buff right now; they just want to get posts published without a lot of fuss. So far so good?
+
+Back in our `<PostsList />` component, let's review how we're returning this data from `getMeteorData()`.
+
+<p class="block-header">/client/components/views/posts-list.jsx</p>
+
+```javascript
+PostsList = React.createClass({
+  mixins: [ ReactMeteorData ],
+  getMeteorData() {
+    Meteor.subscribe( 'postsList' );
+
+    return {
+      posts: Posts.find().fetch().map( ( post ) => {
+        return { uid: post._id, href: `/posts/${ post._id }/edit`, label: post.title };
+      })
+    };
+  },
+  [...]
+});
+```
+
+Here, we're returning a `posts` property (this will be accessible via `this.data.posts` elsewhere in the component) and assigning it to a query to find all of the posts returned from our publication. Next, we `fetch()` that list so we get it back as an `Array` (remember, by default we get a MongoDB cursor from `Posts.find()`) and then we `map()` over that array. Phew! Inside of our map, we give each of our returned posts a slightly different structure, including a `uid`, `href`, and `label` property. What gives?
+
+What we're doing here is formatting the array of posts being returned from `this.data.posts` to match the API of our `<ListGroup />` component. It will be expecting `uid`, `href`, and `label` as props, so we take care of this here so the component can just handle the render. A little strange, so spend some time with the connection between this and the `<ListGroup />` we're outputting when we have posts.
+
+Okay, moving right along. Now for something a little easier: creating new posts.
+
+#### Creating new posts
+
+This part is super simple. Let's look back at our `render()` method for our posts list. Notice that inside, we have a button with an `onClick` prop that's wired up to a method on our component called `handleNewPost()`. The idea here is that when we click this button, we'll fire this method which will call to the server for us. Real quick, here are the essentials:
+
+<p class="block-header">/client/components/views/posts-list.jsx</p>
+
+```javascript
+PostsList = React.createClass({
+  [...]
+  handleNewPost() {
+    Meteor.call( 'newPost', ( error, postId ) => {
+      if ( error ) {
+        Bert.alert( error.reason, 'danger' );
+      } else {
+        FlowRouter.go( `/posts/${ postId }/edit` );
+        Bert.alert( 'All set! Get to typin\'', 'success' );
+      }
+    });
+  },
+  [...]
+  render() {
+    return <GridRow>
+      <GridColumn className="col-xs-12 col-sm-8 col-sm-offset-2">
+        <SuccessButton type="button" label="New Post" onClick={ this.handleNewPost } />
+        <PageHeader size="h4" label="Posts" />
+        { this.renderPostsList() }
+      </GridColumn>
+    </GridRow>;
+  }
+});
+```
+
+For creating a new post, we're not taking in any arguments from the user. Remember all of that "Untitled Post" beeswax from earlier? This is where it comes together. Let's take a peek at this `newPost` method we're dialing up on the server. 
+
+<p class="block-header">/server/methods/insert/posts.js</p>
+
+```javascript
+Meteor.methods({
+  newPost() {
+    return Posts.insert( {} );
+  }
+});
+```
+
+Wait...hahahaha. Yep. That is seriously _it_. All of that work we did in our schema is paying off right here. How the heck is this working? Well, consider that for all of the fields in our schema, each either has:
+
+1. A default value.
+2. An automatically set value.
+3. Is optional.
+
+Combined, this means that when we insert a "blank" object into our collection, our schema is kicking in and automatically populating the required fields for us! Get outta here. Nope. Serious. Grab a pen and write home about this. You're officially a badass! Isn't this cool? Go ahead, beep your own horn.
+
+If we look back at 
 
 #### Saving content
 <div class="note">
