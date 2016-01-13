@@ -17,7 +17,10 @@ let PostsSchema = new SimpleSchema({
     type: String,
     label: "The ID of the author of this post.",
     autoValue() {
-      return this.userId;
+      let user = Meteor.users.findOne( { _id: this.userId } );
+      if ( user ) {
+        return `${ user.profile.name.first } ${ user.profile.name.last }`;
+      }
     }
   },
   "updated": {

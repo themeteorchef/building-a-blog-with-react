@@ -4,15 +4,7 @@ Editor = React.createClass({
     Meteor.subscribe( 'editor', this.props.post );
 
     return {
-      post: Posts.findOne( { _id: this.props.post } ),
-      authorName() {
-        if ( this.post ) {
-          let user = Meteor.users.findOne( { _id: this.post.author } ),
-              name = user.profile.name;
-
-          return name ? `${ name.first } ${ name.last }` : '';
-        }
-      }
+      post: Posts.findOne( { _id: this.props.post } )
     };
   },
   formatLastUpdate( date ) {
@@ -65,6 +57,14 @@ Editor = React.createClass({
 
     setValue( form, '[name="postSlug"]', getSlug( title, { custom: { "'": "" } } ) );
   },
+  getLastUpdate() {
+    if ( this.data ) {
+      let { formatLastUpdate } = ReactHelpers,
+          post                 = this.data.post;
+          
+      return `${ formatLastUpdate( post.updated ) } by ${ post.author }`;
+    }
+  },
   getTags() {
     let post = this.data.post;
 
@@ -78,14 +78,12 @@ Editor = React.createClass({
   render() {
     if ( !this.data.post ) { return <div />; }
 
-    let { formatLastUpdate } = ReactHelpers;
-
     return <GridRow>
       <GridColumn className="col-xs-12 col-sm-8 col-sm-offset-2">
         <PageHeader size="h4" label="Edit Post" />
         <Form ref="editPostForm" id="edit-post" className="edit-post" validations={ this.validations() } onSubmit={ this.handleSubmit }>
           <p className="updated-date">
-            <strong>Last Updated:</strong> { formatLastUpdate( this.data.post.updated ) } by { this.data.authorName() }
+            <strong>Last Updated:</strong> { this.getLastUpdate() }
           </p>
           <FormGroup>
             <FormControl

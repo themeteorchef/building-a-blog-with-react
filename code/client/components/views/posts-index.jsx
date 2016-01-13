@@ -16,20 +16,24 @@ PostsIndex = React.createClass({
   },
   renderHeader() {
     if ( this.props.tag ) {
-      return <Jumbotron>
+      return <Jumbotron className="tags-header">
         <h4>Posts tagged with: { this.props.tag }.</h4>
       </Jumbotron>;
     } else {
-      return <Jumbotron>
+      return <Jumbotron className="blog-header">
         <h2>Get Buff</h2>
         <h4>A new blog by the HD Buff crew.</h4>
       </Jumbotron>;
     }
   },
   renderPosts() {
-    return this.data.posts.map( ( post ) => {
-      return <Post key={ post._id } post={ post } />;
-    });
+    if ( this.data.posts.length > 0 ) {
+      return this.data.posts.map( ( post ) => {
+        return <Post key={ post._id } post={ post } />;
+      });
+    } else {
+      return <WarningAlert>No posts found.</WarningAlert>;
+    }
   },
   render() {
     return <div className="posts">
