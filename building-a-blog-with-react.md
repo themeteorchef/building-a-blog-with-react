@@ -399,7 +399,57 @@ Combined, this means that when we insert a "blank" object into our collection, o
 
 If we look back at our component real quick, we can see that we're taking the returned post ID from our method (remember, when we call .insert() on a collection without a callback, Meteor returns the new document's `_id` value) and redirecting to the "editor" view for working on our post <code>FlowRouter.go( '/posts/${ postId }/edit' );</code>. This is our next stop! Now we need to wire up our editor to actually manage and publish posts.
 
-#### Saving content
+#### Editing content
+This is going to take _a lot_ of work. Don't let that spook you! In honesty, our `<Editor />` component looks scarier than it actually is because we're using up a lot of vertical space to list out props on our components. To step through everything efficiently, we're going to start by wiring up our data for our component _first_ and then discuss how we're making use of it. There's a lot of repetition in concepts here, so pay close attention to the first few to make sure you have a solid grasp on what we're doing.
+
+<p class="block-header">/client/components/views/editor.jsx</p>
+
+```javascript
+Editor = React.createClass({
+  mixins: [ ReactMeteorData ],
+  getMeteorData() {
+    Meteor.subscribe( 'editor', this.props.post );
+
+    return {
+      post: Posts.findOne( { _id: this.props.post } )
+    };
+  },
+  [...]
+  render() {
+    if ( !this.data.post ) { return <div />; }
+
+    return [...]
+  }
+});
+```
+
+Easy does it to start! Notice that in terms of loading in data, this is all pretty simplistic. First, up in `getMeteorData()`, notice that we're pulling in the value `this.props.post` in order to subscribe to our data and filter down _which_ post we're currently editing. But wait, where is that coming from? Our route! Let's take a quick peek to see how it's being passed down.
+
+<p class="block-header">/both/routes/authenticated.jsx</p>
+
+```javascript
+[...]
+
+authenticatedRoutes.route( '/posts/:_id/edit', {
+  name: 'editor',
+  action( params ) {
+    ReactLayout.render( App, { yield: <Editor post={ params._id } /> } );
+  }
+});
+```
+
+In our [authenticated routes group](https://github.com/themeteorchef/building-a-blog-with-react/blob/master/code/both/routes/authenticated.jsx), we're defining our path (the one we redirected to in the previous step after creating a post and linked each of our list items to) to our editor. Notice that in the `action()` method, we're pulling in the `params` object for the route and on our invocation of `<Editor />`, we're passing `post={ params._id }`, or, the `_id` value from our URL! By passing this into our props, whenever our URL changes to a new post, our component will automatically get access to its `_id` straight from the router. Swish.
+
+Back in our `<Editor />`, then, we subscribe to our `editor` publication passing in the post ID and then—to compensate for React's speed when moving between views—pass the ID to our `Posts.findOne()` as well. This ensures that when we go to a different post, we don't get stuck on the previous one because that's what our component sees in the minimongo collection (the result we'd get if we left this as a plain `Posts.findOne()`). Safety first!
+
+Speaking of safety, we also need to account for our data not being ready down in our `render()` method. Notice that we first check to see if `this.data.post` is defined and if it's _not_, we return an empty div until it _is_ ready. Once it _is_ ready, we return our component's actual markup (we'll do this next). So far so good? Okay, **strap on your goggles, we're going downhill at full speed from here**!
+
+<p class="block-header">/client/components/views/editor.jsx</p>
+
+```javascript
+
+```
+
 <div class="note">
   <h3>Why not use a component? <i class="fa fa-warning"></i></h3>
   <p>As of writing, adding third-party components is tricky. The original scope for this recipe was to include a token input, however, the experience of implementing it was confusing to say the least. Unless you're comfortable getting your hands dirty, usage of third-party components is unadvised until Meteor adds proper support for <code>require</code> in Meteor 1.3.</p>
