@@ -695,6 +695,8 @@ Well, remember that when creating our new posts, we didn't set a content or tags
 Awesome. At this point, we've got our posts inserting and everything wired up for admins. Next, let's focus on getting posts output for our readers. This will be much simpler and should go pretty fast!
 
 ### Listing posts in the index (and tag pages)
+Great work so far. We've come a long way, but we're not quite done. Next, we need to wire up a list of posts for HD Buff's readers. This will be the main stream of _published_ posts. In tandem with this, we're also going to wire up a way to make this list filterable by tag. 
 
+### Displaying a single post
 
 ### Wrap up & summary
