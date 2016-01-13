@@ -21,12 +21,18 @@ FormControl = React.createClass({
         className="form-control"
         name={ this.props.name }
         placeholder={ this.props.label }
+        disabled={ this.props.disabled }
+        onChange={ this.props.onChange }
+        defaultValue={ this.props.defaultValue }
       />,
       textarea: <textarea
         ref={ this.props.ref }
         name={ this.props.name }
         className="form-control"
         placeholder={ this.props.label }
+        disabled={ this.props.disabled }
+        onChange={ this.props.onChange }
+        defaultValue={ this.props.defaultValue }
       ></textarea>
     };
 

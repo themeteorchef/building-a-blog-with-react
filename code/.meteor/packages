@@ -38,3 +38,7 @@ react
 peerlibrary:aws-sdk
 random
 kadira:react-layout
+cosmos:browserify
+ongoworks:speakingurl
+themeteorchef:commonmark
+momentjs:moment

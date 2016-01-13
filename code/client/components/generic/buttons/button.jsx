@@ -5,7 +5,11 @@ Button = React.createClass({
         { this.props.label }
       </a>;
     } else {
-      return <button type={ this.props.type } className={ `btn btn-${ this.props.style }` }>
+      return <button
+        type={ this.props.type }
+        className={ `btn btn-${ this.props.style }` }
+        onClick={ this.props.onClick }
+      >
         { this.props.label }
       </button>;
     }

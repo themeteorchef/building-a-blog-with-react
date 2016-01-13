@@ -5,6 +5,7 @@ SuccessButton = React.createClass({
       style="success"
       label={ this.props.label }
       href={ this.props.href }
+      onClick={ this.props.onClick }
     />;
   }
 });

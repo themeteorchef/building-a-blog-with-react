@@ -3,6 +3,16 @@ let administrators = [
     name: { first: 'Admin', last: 'McAdmin' },
     email: 'admin@admin.com',
     password: 'password'
+  },
+  {
+    name: { first: 'Joe', last: 'Buff' },
+    email: 'joe@hdbuff.com',
+    password: 'password'
+  },
+  {
+    name: { first: 'Jane', last: 'Buff' },
+    email: 'jane@hdbuff.com',
+    password: 'password'
   }
 ];
 
