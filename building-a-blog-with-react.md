@@ -397,7 +397,7 @@ Wait...hahahaha. Yep. That is seriously _it_. All of that work we did in our sch
 
 Combined, this means that when we insert a "blank" object into our collection, our schema is kicking in and automatically populating the required fields for us! Get outta here. Nope. Serious. Grab a pen and write home about this. You're officially a badass! Isn't this cool? Go ahead, beep your own horn.
 
-If we look back at 
+If we look back at our component real quick, we can see that we're taking the returned post ID from our method (remember, when we call .insert() on a collection without a callback, Meteor returns the new document's `_id` value) and redirecting to the "editor" view for working on our post <code>FlowRouter.go( '/posts/${ postId }/edit' );</code>. This is our next stop! Now we need to wire up our editor to actually manage and publish posts.
 
 #### Saving content
 <div class="note">
