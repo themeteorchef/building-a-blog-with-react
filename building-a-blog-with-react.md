@@ -688,8 +688,8 @@ Meteor.methods({
 });
 ```
 
-Yep, pretty simple! Here, we're not doing much. First, we [check]() that the value we get from the client is an `Object`. Next, we assign the value of `post._id` to a variable `postId` and then delete it from the main `post` object (we don't want to include this in the value we pass to our `upsert` below). 
+Yep, pretty simple! Here, we're not doing much. First, we [check](https://themeteorchef.com/snippets/using-the-check-package/) that the value we get from the client is an `Object`. Next, we assign the value of `post._id` to a variable `postId` and then delete it from the main `post` object (we don't want to include this in the value we pass to our `upsert` below). 
 
-### Listing posts in the index
-### Creating tag pages
+### Listing posts in the index (and tag pages)
+
 ### Wrap up & summary
