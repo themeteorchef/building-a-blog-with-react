@@ -842,6 +842,54 @@ Here, if we look at `<div className="post-body"></div>` we can see this taking p
 
 If we look at that method, it's pretty simple. All we're doing here is returning an object with a property `__html`, equal to the result of converting our Markdown into HTML. We get the `parseMarkdown()` method from the `themeteorchef:commonmark` package we installed earlier. In passing our string of Markdown to it, we get back a sanitized, HTML-ified version of our posts contents. We set this on the `__html` propery of the object we're returning and React takes care of the rest! Note: that `__html` property in an object thing is specific to `dangerouslySetInnerHTML`. If we pass our string directly, React will throw a tantrum.
 
+That's all we need to know for our `<Post />` component! One last step: rendering a single post. This is quick and painless, so let's take a look.
+
 ### Displaying a single post
+Fortunately, with our `<Post />` component wired up, displaying a single post is pretty easy. Let's dump out the whole component and explain what's happening.
+
+<p class="block-header">/client/components/views/single-post.jsx</p>
+
+```javascript
+SinglePost = React.createClass({
+  mixins: [ ReactMeteorData ],
+  getMeteorData() {
+    let sub = Meteor.subscribe( 'singlePost', this.props.slug );
+
+    return {
+      post: Posts.findOne( { slug: this.props.slug } ),
+      ready: sub.ready()
+    };
+  },
+  render() {
+    if ( !this.data ) { return <div />; }
+    return <GridRow>
+      <GridColumn className="col-xs-12 col-sm-8 col-sm-offset-2">
+        <Post singlePost={ true } post={ this.data.ready && this.data && this.data.post } />
+      </GridColumn>
+    </GridRow>;
+  }
+});
+```
+
+Pretty close to what we've been up to. Notice that down in our `render()` method, we're wiring up our data source to the `<Post />` component we just wrapped up. That's the bulk of this component! The one thing we want to call attention to is how we're loading in our data. Notice that up in `getMeteorData()`, we're assigning our subscription to `sub`, and then making the response to its `.ready()` handle available at `this.data.ready`. We make use of `this.data.ready` down below in our call to `<Post />`. 
+
+What's up with this? This is a safeguard. What we want to avoid is React moving too fast and rendering with the wrong data. By tying into `sub.ready()`, we're waiting to return data to our `<Post />` component until we're absolutely certain we have the post data we need. We can do this because our call to `Meteor.subscribe( 'singlePost' );` is updating when we change posts (e.g. clicking on another post in our list). Let's take a peek at our publication real quick to understand that.
+
+<p class="block-header">/server/publications/single-post.js</p>
+
+```javascript
+Meteor.publish( 'singlePost', ( postSlug ) => {
+  check( postSlug, String );
+
+  return Posts.find( { slug: postSlug } );
+});
+```
+
+Making sense? When we move to a new post, we grab its slug value from our route and pass it into `<SinglePost slug={ params.slug } />` as a prop. Then, in the component we subscribe using that same slug, returning only the post that matches that slug in the database. Nice and tidy!
+
+Back in our component, then, whenever we make the change to a new post, we're updating the slug and our subscription re-responds to `sub.ready()`. Neat! This means that we avoid any issues with displaying the incorrect post, allowing React's speed to play nicely with Meteor's reactivity. 
+
+That's it! At this point, we've successfully fulfilled HD Buff's request for a simple blog! We have the ability to post, view a list of posts, sort posts by tag, and view a single post. We even added a means for managing posts behind the scenes for HD Buff's team. Great work!
 
 ### Wrap up & summary
+In this recipe we learned how to create a simple blog using Meteor and the React user interface library. We learned how to wire up a large collection of components, working with things like nesting, passing around props, and wiring up a data source with `ReactMeteorData`. Further, we learned how to manage an editing interface for writing posts as well as how to get those posts to display back for users. We even learned how to make use of collection2's `autoValue()` method to do some heavy lifting for us!
