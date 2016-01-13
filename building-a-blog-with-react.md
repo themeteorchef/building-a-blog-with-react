@@ -688,8 +688,13 @@ Meteor.methods({
 });
 ```
 
-Yep, pretty simple! Here, we're not doing much. First, we [check](https://themeteorchef.com/snippets/using-the-check-package/) that the value we get from the client is an `Object`. Next, we assign the value of `post._id` to a variable `postId` and then delete it from the main `post` object (we don't want to include this in the value we pass to our `upsert` below). 
+Yep, pretty simple! Here, we're not doing much. First, we [check](https://themeteorchef.com/snippets/using-the-check-package/) that the value we get from the client is an `Object`. Next, we assign the value of `post._id` to a variable `postId` and then delete it from the main `post` object (we don't want to include this in the value we pass to our `upsert` below). Finally, we perform an `upsert` on our `Posts` collection, passing in our post's contents via a MongoDB `$set` method. Why use an `upsert` here? 
+
+Well, remember that when creating our new posts, we didn't set a content or tags field. With an upsert, we get the best of doing an update and an insert. If a field doesn't exist on the object we're trying to update, the upsert will create it for us. If it already exists, it will just update the value! This means that we don't have to fight with missing fields conflicting with those that already exist. We just call an `upsert` and let Mongo handle the stick parts for us. 
+
+Awesome. At this point, we've got our posts inserting and everything wired up for admins. Next, let's focus on getting posts output for our readers. This will be much simpler and should go pretty fast!
 
 ### Listing posts in the index (and tag pages)
+
 
 ### Wrap up & summary
