@@ -587,7 +587,7 @@ Here, `formatLastUpdate()` is responsible for taking the date our post was last 
 
 Okay. Next up is something really neat! To make the editing experience nice and simple for the folks at HD Buff, we want to auto-generate slugs based on whatever title they set on the post. To do this, notice that in our `render()` method, the `<FormControl />` component for our post's title has an `onChange={ this.generateSlug }` prop. Can you guess what's happening here? Whenever this input changes (meaning a user types in it), we want to grab that value, convert it into a slug `like-this-right-here` and set it on the slug field beneath the title. Let's take a peek at the `generateSlug()` method we're calling.
 
-<p class="block-header">/path</p>
+<p class="block-header">/client/components/views/editor.jsx</p>
 
 ```javascript
 generateSlug( event ) {
