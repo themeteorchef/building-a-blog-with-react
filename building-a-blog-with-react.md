@@ -787,7 +787,60 @@ Real quick, let's take a peek at that `<Post />` component as it's got a little 
 
 #### The `<Post />` component
 
+The `<Post />` component is reusing a lot of the same techniques as explained above, except for one. Let's take a look at the full component and then talk about the one that stands out.
 
+<p class="block-header">/client/components/generic/post.jsx</p>
+
+```javascript
+Post = React.createClass({
+  getPostTitle() {
+    let post = this.props.post;
+    
+    if ( this.props.singlePost ) {
+      return <h3>{ post.title }</h3>;
+    } else {
+      return <h3><a href={ `/posts/${ post.slug }`}>{ post.title }</a></h3>;
+    }
+  },
+  getHTML( markdown ) {
+    if ( markdown ) {
+      return { __html: parseMarkdown( markdown ) };
+    }
+  },
+  renderTags( tags ) {
+    if ( tags ) {
+      return <div className="tags">
+        {tags.map( ( tag ) => {
+          return <a className="tag" href={ `/tags/${ tag }` }>#{ tag }</a>;
+        })}
+      </div>;
+    }
+  },
+  render() {
+    let { formatLastUpdate } = ReactHelpers,
+        post                 = this.props.post;
+
+    return <div className="post">
+      { this.getPostTitle() }
+      <p><strong>Last Updated:</strong> { formatLastUpdate( post.updated ) } by { post.author }</p>
+      { this.renderTags( post.tags ) }
+      <div className="post-body" dangerouslySetInnerHTML={ this.getHTML( post.content ) } />
+    </div>;
+  }
+});
+```
+
+Okay! A lot of this is pretty straightforward. Here, we're rendering the actual contents of a post out for display. Notice that down in our `render()` method, we're simply grabbing the contents of our post and then displaying them in the UI. Because we'll be using this component conditionally (in either a list of posts or as a single post), we've set up a few methods to help us negotiate that process. For `getPostTitle()`, notice that we're checking whether or not our component has a `this.props.singlePost` value. 
+
+In our last step, we'll wire up a component that makes use of this. If we _do_ detect this value, we want to return a plain `<h3></h3>` tag containing our title _without_ a link. If we're not on a single post, we return an `<h3></h3>` tag with a link _to_ our post. Think about that one! If we're in a list of posts, we'll want a link so we can read the post. If we're on a single post, we're already viewing it so we don't need the link. 
+
+For our tags, there's not much mystery. Inside of `renderTags()`, if we get a list of tags for our post, we simply map over each and return an `<a></a>` tag with a link to that tag's page (this makes use of the code we wrote in the previous step) along with the name of the tag. Simple! 
+
+The big scary part (not really) of this is Markdown. In React, it's advised to be cautious when setting HTML directly on a component. Most of the time this isn't necessary, however, with Markdown conversion, we _will_ need to set HTML directly. Why? Well, when we get our post back here on the client, what we're actually getting back is a string of Markdown. In order to convert that into HTML, we need a way to do that and then set the value in our component.
+
+Here, if we look at `<div className="post-body"></div>` we can see this taking place in the prop `dangerouslySetInnerHTML`. Spooky! This method is aptly named as outside of scenarios like this, setting this value can leave a component vulnerable to [XSS](https://facebook.github.io/react/tips/dangerously-set-inner-html.html) attacks. Fortunately in this case, we're safe as we know what we're putting into the DOM (at that location) has been properly sanitized. To handle that sanitization, notice that we're making a call to `this.getHTML()`.
+
+If we look at that method, it's pretty simple. All we're doing here is returning an object with a property `__html`, equal to the result of converting our Markdown into HTML. We get the `parseMarkdown()` method from the `themeteorchef:commonmark` package we installed earlier. In passing our string of Markdown to it, we get back a sanitized, HTML-ified version of our posts contents. We set this on the `__html` propery of the object we're returning and React takes care of the rest! Note: that `__html` property in an object thing is specific to `dangerouslySetInnerHTML`. If we pass our string directly, React will throw a tantrum.
 
 ### Displaying a single post
 
