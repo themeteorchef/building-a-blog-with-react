@@ -35,10 +35,8 @@ reactive-dict
 aldeed:collection2
 tracker
 react
-peerlibrary:aws-sdk
 random
 kadira:react-layout
-cosmos:browserify
 ongoworks:speakingurl
 themeteorchef:commonmark
 momentjs:moment
