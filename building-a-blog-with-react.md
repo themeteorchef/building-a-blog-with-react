@@ -447,8 +447,126 @@ Speaking of safety, we also need to account for our data not being ready down in
 <p class="block-header">/client/components/views/editor.jsx</p>
 
 ```javascript
+Editor = React.createClass({
+  [...]
+  generateSlug( event ) {
+    let { setValue } = ReactHelpers,
+        form         = this.refs.editPostForm.refs.form,
+        title        = event.target.value;
 
+    setValue( form, '[name="postSlug"]', getSlug( title, { custom: { "'": "" } } ) );
+  },
+  getLastUpdate() {
+    if ( this.data ) {
+      let { formatLastUpdate } = ReactHelpers,
+          post                 = this.data.post;
+
+      return `${ formatLastUpdate( post.updated ) } by ${ post.author }`;
+    }
+  },
+  getTags() {
+    let post = this.data.post;
+
+    if ( post && post.tags ) {
+      return post.tags.join( ', ' );
+    }
+  },
+  handleSubmit( event ) {
+    event.preventDefault();
+  },
+  render() {
+    if ( !this.data.post ) { return <div />; }
+
+    return <GridRow>
+      <GridColumn className="col-xs-12 col-sm-8 col-sm-offset-2">
+        <PageHeader size="h4" label="Edit Post" />
+        <Form ref="editPostForm" id="edit-post" className="edit-post" validations={ this.validations() } onSubmit={ this.handleSubmit }>
+          <p className="updated-date">
+            <strong>Last Updated:</strong> { this.getLastUpdate() }
+          </p>
+          <FormGroup>
+            <FormControl
+              style="checkbox"
+              name="postPublished"
+              id="#post-published"
+              label="Published?"
+              defaultValue={ this.data.post && this.data.post.published }
+            />
+          </FormGroup>
+          <FormGroup>
+            <FormControl
+              showLabel={ false }
+              style="input"
+              type="text"
+              name="postTitle"
+              label="Title"
+              onChange={ this.generateSlug }
+              defaultValue={ this.data.post && this.data.post.title }
+            />
+          </FormGroup>
+          <FormGroup>
+            <FormControl
+              disabled={ true }
+              showLabel={ false }
+              style="input"
+              type="text"
+              name="postSlug"
+              label="Slug"
+              defaultValue={ this.data.post && this.data.post.slug }
+            />
+          </FormGroup>
+          <FormGroup>
+            <FormControl
+              showLabel={ false }
+              style="textarea"
+              name="postContent"
+              label="Content"
+              defaultValue={ this.data.post && this.data.post.content }
+            />
+          </FormGroup>
+          <FormGroup>
+            <FormControl
+              showLabel={ false }
+              style="input"
+              type="text"
+              name="postTags"
+              label="Tags"
+              defaultValue={ this.getTags() }
+            />
+          </FormGroup>
+          <FormGroup>
+            <SuccessButton type="submit" label="Save Post" />
+          </FormGroup>
+        </Form>
+      </GridColumn>
+    </GridRow>;
+  }
+});
 ```
+
+Seriously?! I warned you! We've got a lot going on here so let's work our way through it. First, the basics. Down in our `render()` method, let's inspect each of the [`<FormControl />`](https://github.com/themeteorchef/building-a-blog-with-react/blob/master/code/client/components/generic/forms/form-control.jsx) components being added. The part we want to pay attention to on each, here, is the `defaultValue` property. Notice that for the first four fields we're rendering, we're setting this equal to `this.data.post && this.data.post.<someProperty>`. What gives?
+
+This is a trick picked up from reader [Patrick Lewis](https://twitter.com/patrickml1). While we may expect this to return a `Boolean` value, in JSX, the interpretation is to say if both of these return true (exist), then _return_ the last value in the chain. This helps us to avoid a bunch of ternary operators littering our code. It's a bit cryptic the first time you see it, but once you start to use it you won't want to go back! 
+
+What this all translates to, then, is that we're setting the default value for each of our input fields _if_ a value exists for that field on `this.data.post`. This covers two scenarios: editing a new post we just created with _some data_ and coming back later to edit a post with everything. If you've been having trouble wrapping your head around the importance of components and React, this is it: extreme frugality in respect to reusing interface components! This is like [extreme couponing](https://www.youtube.com/watch?v=8lFWTGog__I) for developers.
+
+For our final input—where we'll render a list of tags—we make a call to a method up above `this.getTags()`. It's pretty simple but important, so let's take a closer look.
+
+<p class="block-header">/client/components/views/editor.jsx</p>
+
+```javascript
+getTags() {
+  let post = this.data.post;
+
+  if ( post && post.tags ) {
+    return post.tags.join( ', ' );
+  }
+}
+```
+
+Because our list of tags will be stored as an _array_, when returning it back to the editor, we need to "prettify it" as a string. For example, we're expecting something like this `[ 'tacos', 'burritos', 'sandwiches' ]` but want to set the value of our tags input to `tacos, burritos, sandwiches`. Using this method `getTags()`, we accomplish this by pulling in the post data and if we discoer it has tags set, use a JavaScript `.join( ', ' )` to return our array as a comma-separated string! 
+
+Continuing down a similar path, let's slide up our component a little further and look at the `getLastUpdate()` method we're using toward the top of our component's `render()` method.
 
 <div class="note">
   <h3>Why not use a component? <i class="fa fa-warning"></i></h3>
