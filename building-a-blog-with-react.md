@@ -663,7 +663,32 @@ handleSubmit( event ) {
 ```
 Woah buddy! A lot going on here but nothing too crazy. Notice that we have two methods output here: `validations()` and `handleSubmit()`. Here, `handleSubmit()` is responsible for "terminating" the default behavior of our form's `onSubmit` method—we can see this being attached to our `<Form />` component in our `render()`—and instead, deferring submission to our validation's `submitHandler()` method. This is a bit strange, but allows to get our form validated and handle the submission without a lot of running around.
 
-Inside `validations()`—this is also attached to our `<Form />` component as a prop—we add a single rule for our `postTitle` input. This is ensuring that `postTitle` is _not_ blank when our user submits the form. If it is, they'll be asked to correct it before they submit the form. Once the form is all green, we get to work in our `submitHandler()`. At this point, we're building up the object we'll send to the server to update our post. 
+Inside `validations()`—this is also attached to our `<Form />` component as a prop—we add a single rule for our `postTitle` input. This is ensuring that `postTitle` is _not_ blank when our user submits the form. If it is, they'll be asked to correct it before they submit the form. Once the form is all green, we get to work in our `submitHandler()`. At this point, we're building up the object we'll send to the server to update our post.
+
+Here, we're making use of a few more helpers from our `ReactHelpers` object. At this point, all we're doing is fetching the current values from each of the fields in our form. Two to point out: `published` and `tags`. Notice that for published, we're using the helper `isChecked` to determine whether or not the "Published?" box is checked. For `tags`, we're grabbing the current value of the input and then _splitting_ it into an array. To make sure our data is clean, we use a map to return an array of with each value obtained from the string with a `trim()`. This ensures that none of our tags have any trailing spaces (e.g. <code>tag </code> vs. `tag`).
+
+So far so good? Once we have this, it's up to the server to save the post!
+
+#### Updating the post on the server
+
+Let's take a look at our `savePost` method on the server. Hint: it's really simple.
+
+<p class="block-header">/server/methods/update/posts.js</p>
+
+```javascript
+Meteor.methods({
+  savePost( post ) {
+    check( post, Object );
+
+    let postId = post._id;
+    delete post._id;
+
+    Posts.upsert( postId, { $set: post } );
+  }
+});
+```
+
+Yep, pretty simple! Here, we're not doing much. First, we [check]() that the value we get from the client is an `Object`. Next, we assign the value of `post._id` to a variable `postId` and then delete it from the main `post` object (we don't want to include this in the value we pass to our `upsert` below). 
 
 ### Listing posts in the index
 ### Creating tag pages
