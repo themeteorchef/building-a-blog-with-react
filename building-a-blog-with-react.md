@@ -661,7 +661,7 @@ handleSubmit( event ) {
   event.preventDefault();
 }
 ```
-Woah buddy! A lot going on here but nothing too crazy. Notice that we have two methods output here: `validations()` and `handleSubmit()`. Here, `handleSubmit()` is responsible for "terminating" the default behavior of our form's `onSubmit` method—we can see this being attached to our `<Form />` component in our `render()`—and instead, deferring submission to our validation's `submitHandler()` method. This is a bit strange, but allows to get our form validated and handle the submission without a lot of running around.
+Woah buddy! A lot going on here but nothing too crazy. Notice that we have two methods output here: `validations()` and `handleSubmit()`. Here, `handleSubmit()` is responsible for "terminating" the default behavior of our form's `onSubmit` method—we can see this being attached to our `<Form />` component in our `render()`—and instead, deferring submission to our validation's `submitHandler()` method. This is a bit strange, but allows us to get our form validated and handle the submission without a lot of running around.
 
 Inside `validations()`—this is also attached to our `<Form />` component as a prop—we add a single rule for our `postTitle` input. This is ensuring that `postTitle` is _not_ blank when our user submits the form. If it is, they'll be asked to correct it before they submit the form. Once the form is all green, we get to work in our `submitHandler()`. At this point, we're building up the object we'll send to the server to update our post.
 
