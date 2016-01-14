@@ -1,7 +1,7 @@
 ##### The Meteor Chef
 ###### \#018 - Building a Blog with React
 
-In this recipe, we'll learn how to build a simple blog using the React user interface framework for our front-end. We'll learn how to create posts with tags, generate an index of posts, and generate tag pages to filter posts.
+In this recipe, we'll work with HD Buff, a curated video streaming service to create a blog for their website using React. We'll see how to create a simple admin area, retrieve posts, and even handle things like Markdown directly from our React components!
 
 [Read on The Meteor Chef](http://themeteorchef.com/recipes/building-a-blog-with-react)  
 
